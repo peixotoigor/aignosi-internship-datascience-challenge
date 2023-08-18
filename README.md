@@ -31,9 +31,8 @@ Iremos avaliar com bastante critério (**em ordem de relevância maior para meno
 2. Maturidade no versionamento do seu código
 3. Nível de organização e sequência lógica de exploração dos dados
 4. Maturidade no correto entendimento dos conceitos fundamentais em ciência de dados e o julgamento apropriado de como você emprega as técnicas de exploração
-5. modelagem de dados
-6. Skills de comunicação e apresentação (quando for apresentar o trabalho para os stakeholders)
-7. Skills em Data Viz, ou seja, a qualidade e a clareza dos seus gráficos, bem como a facilidade de interpretação
+5. Skills de comunicação e apresentação (quando for apresentar o trabalho para os stakeholders)
+6. Skills em Data Viz, ou seja, a qualidade e a clareza dos seus gráficos, bem como a facilidade de interpretação
 
 ## 1.4 Critérios que **Não nos preocupamos tanto** nessa etapa
 
@@ -85,7 +84,7 @@ Pois então, veja que você a oportunidade em mãos de mostrar para esse cliente
 
 Dito tudo isso, te damos uma dica: preocupe em avaliar bem os dados que você tem em mãos, explicar bem as escolhas das aplicações das técnicas de exploração dos dados e capriche numa apresentação impactante, de forma que o seu cliente que é leigo, possa entender os gráficos e o contexto que você quer vender: **há um bom potencial preditivo nesses dados, veja sô!**
 
-Portanto, reforçando novamente: se preocupe menos com a performance do modelo.
+Portanto, reforçando novamente: não se preocupe em ter que fazer modelo para esse desafop.
 
 Mais detalhes sobre o cliente: é uma mineradora e o seu cliente de contato direto e quem está comprando o projeto piloto da sua empresa tem uma leve noção de análise de dados.
 
@@ -103,8 +102,7 @@ Busque trazer **diferenciais** para o seu desafio:
 2. Descrever o que está vendo nas séries temporais? Há tendência/sazonalidade? Tem muito ou pouco ruído? E os outliers?
 3. Descrever minimamente por que está técnica A ou B para explorar os dados. Exemplo, usei o PCA porque acredito ser interessante por causa de xxxx e esperava ver yyyyy
 4. Descreva porquê e como escolheu as *features*
-5. Comente porque está aplicando o modelo/algoritmo x e como está representando os dados para o modelo.
-6. Comente como chegou na performance final do modelo e porque acredita que há potencial de explorarmos mais esses dados? 
+5. Descreva que tipo de modelo usaria, caso fosse necessário aplicar algum tipo
 
 ## 2.4 Agradecimentos e dúvidas
 
