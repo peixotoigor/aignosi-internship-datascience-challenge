@@ -30,17 +30,20 @@ Iremos avaliar com bastante critério (**em ordem de relevância maior para meno
 1. Maturidade na codificação (**organização do código**, estilos e qualidade dos comentários)
 2. Maturidade no versionamento do seu código
 3. Nível de organização e sequência lógica de exploração dos dados
-4. Maturidade no correto entendimento dos conceitos fundamentais em ciência de dados e o julgamento apropriado de como você emprega as técnicas de exploração e modelagem de dados
-5. Skills de comunicação e apresentação (quando for apresentar o trabalho para os stakeholders)
-6. Skills em Data Viz, ou seja, a qualidade e a clareza dos seus gráficos, bem como a facilidade de interpretação
+4. Maturidade no correto entendimento dos conceitos fundamentais em ciência de dados e o julgamento apropriado de como você emprega as técnicas de exploração
+5. modelagem de dados
+6. Skills de comunicação e apresentação (quando for apresentar o trabalho para os stakeholders)
+7. Skills em Data Viz, ou seja, a qualidade e a clareza dos seus gráficos, bem como a facilidade de interpretação
 
 ## 1.4 Critérios que **Não nos preocupamos tanto** nessa etapa
 
-**Performance de modelo** 
+**Capacidade em explorar dados de maneira coerente** 
 
-É isso mesmo que você está lendo! Parece contraintuitivo, mas não estamos preocupado em você conseguir fazer um super modelo com mega performance, até porque esse modelo não será colocado em produção, então, não há necessidade de se preocupar demais com isso e gastar todo o tempo do desafio com isso. 
+É isso mesmo que você está lendo! Parece contraintuitivo, mas não estamos preocupado em você conseguir fazer um modelo de ML, até porque esse modelo não será colocado em produção, então, não há necessidade de se preocupar com isso e gastar todo o tempo do desafio com isso. 
 
-Sim, **esperamos que você faça um modelo razoável**, mas não "frite" os neurônios com isso. Lembre dos principais critérios que estamos nos preocupando mais em te avaliar, conforme descrito no item anterior.
+**Esperamos que você faça um EDA (exploratory data analysis)** bacana, mas não "frite" os neurônios com modelos. Lembre dos principais critérios que estamos nos preocupando mais em te avaliar, conforme descrito no item anterior.
+
+Claro que se você já sabe fazer algum modelo de ML aplicável ao problema, ótimo e o faça. Porém se for realmente fazer algum modelo, preferimos que faça um modelo o mais simples possível (isso mesmo, evite usar deep learning!). Fazer um modelo será considerado um diferencial, mas não é critério de caráter eliminatório.
 
 ## 1.5 Requisitos mínimos
 
