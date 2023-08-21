@@ -57,7 +57,7 @@ Para realizar o desafio, você precisa **cumprir os seguintes requisitos**:
 
 ## 1.6 Entregáveis, Prazos e Submissão final
 
-1. **Submeter via github** a versão final do(s) seu(s) código(s) em formato *.py e/ou *.ipynb via github;
+1. **Submeter via github** a versão final do(s) seu(s) código(s) em formato *.py via github;
 1. Utilizar o git também para enviar o arquivo da sua apresentação;
 1. Submeter em uma nova *branch* que segue o seguinte padrão: internship-datascientist-challenge-xxxxxxxx (onde x representa o seu nome e sobrenome juntos, sem acento e com caracteres minúsculos). Exemplo: internship-datascientist-challenge-eduardomagalhaes
 1. Prazo inicial de **até 03 semanas**, a contar a partir da data em que você recebeu o email de convocação para o desafio;
