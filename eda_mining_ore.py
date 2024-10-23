@@ -4,6 +4,8 @@
 import pandas as pd
 import numpy as np
 from statsmodels.tsa.seasonal import seasonal_decompose
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 
 # Visualização de dados
 import matplotlib.pyplot as plt
@@ -64,7 +66,7 @@ print(dados_tratados.info())
 
 # EDA - Análise Exploratória de Dados
 # Análise de correlação
-matriz_correlacao  dados_tratados.corr()
+matriz_correlacao = dados_tratados.corr()
 
 mask = np.triu(np.ones_like(matriz_correlacao, dtype=bool))# Criar uma máscara para o triângulo superior
 plt.figure(figsize=(20, 15))
@@ -249,3 +251,78 @@ axs[-1].set_xlabel('Date')
 # Ajustar layout e mostrar o gráfico
 plt.tight_layout(rect=[0, 0, 1, 0.96])  # Ajustar layout para não sobrepor o título
 plt.savefig('Images/series_temporais_airFlow.png')
+
+# Uma analise visual rápida das series temporais indicam que, de certa maneira, 
+# O pH baixo da polpa de minério, a redução de amido e amida está associado a um aumento na concentração de sílica
+# Controlar esses parâmetros pode ser uma maneira de controlar a concentração de sílica
+
+# O controle do níveis de fluxo ar nas colunas de flotação finais pode contribuir para a redução da silica
+
+# APlicação da técnica PCA para redução de dimensionalidade
+
+x = dados_tratados
+scaler = StandardScaler() # Padronização dos dados, os dados possuem escalas diferentes a padronização é necessária
+x_scaled = scaler.fit_transform(x)
+
+# Aplicação da PCA sem especificar o número de componentes
+pca = PCA()
+pca.fit(x_scaled)
+
+# Variância explicada por cada componente principal
+explained_variance = pca.explained_variance_ratio_
+
+# Scree plot
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, len(explained_variance) + 1), explained_variance, marker='o', linestyle='--')
+plt.title('Scree Plot')
+plt.xlabel('Principal Component')
+plt.ylabel('Explained Variance Ratio')
+plt.savefig('Images/scree_plot.png')
+
+
+# Cumulative explained variance plot
+cumulative_explained_variance = explained_variance.cumsum()
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, len(cumulative_explained_variance) + 1), cumulative_explained_variance, marker='o', linestyle='--')
+plt.title('Cumulative Explained Variance')
+plt.xlabel('Number of Principal Components')
+plt.ylabel('Cumulative Explained Variance Ratio')
+plt.axhline(y=0.8, color='r', linestyle='--')  # Linha de referência para 85% da variância explicada
+plt.savefig('Images/cumulative_explained_variance.png')
+
+
+# Determinar o número ótimo de componentes principais
+optimal_components = next(i for i, cumulative_variance in enumerate(cumulative_explained_variance) if cumulative_variance >= 0.8) + 1
+print(f'O número ótimo de componentes principais é: {optimal_components}')
+
+# Aplicação da PCA com o número ótimo de componentes
+pca_optimal = PCA(n_components=optimal_components)
+principal_components = pca_optimal.fit_transform(x_scaled)
+
+# Criação de um DataFrame com os componentes principais
+pca_df = pd.DataFrame(data=principal_components, columns=[f'PC{i+1}' for i in range(optimal_components)])
+pca_df.index = dados_tratados.index  # Manter o índice de tempo original
+
+
+# Análise das cargas dos componentes principais
+loadings = pd.DataFrame(pca_optimal.components_.T, columns=[f'PC{i+1}' for i in range(optimal_components)], index=dados_tratados.columns)
+print(loadings)   
+
+# Visualização das cargas dos componentes principais
+plt.figure(figsize=(16, 8))
+sns.heatmap(loadings, annot=True, cmap='coolwarm')
+plt.title('Heatmap of Principal Component Loadings')
+plt.xlabel('Principal Components')
+plt.ylabel('Features')
+plt.savefig('Images/pca_loadings_heatmap.png')
+
+
+# Visualização das séries temporais dos componentes principais
+plt.figure(figsize=(16, 8))
+for i in range(optimal_components):
+    plt.plot(pca_df.index, pca_df[f'PC{i+1}'], label=f'PC{i+1}')
+plt.xlabel('Date')
+plt.ylabel('Principal Components')
+plt.legend()
+plt.title('Principal Components over Time')
+plt.savefig('Images/pca_time_series.png')
