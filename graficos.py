@@ -272,4 +272,3 @@ plt.savefig('Images/series_temporais_airFlow.png', format='png', dpi=600)
 # Controlar esses parâmetros pode ser uma maneira de controlar a concentração de sílica
 
 # O controle do níveis de fluxo ar nas colunas de flotação finais pode contribuir para a redução da silica
-
