@@ -273,4 +273,3 @@ plt.savefig('Images/series_temporais_airFlow.png', format='png', dpi=600)
 
 # O controle do níveis de fluxo ar nas colunas de flotação finais pode contribuir para a redução da silica
 
-
