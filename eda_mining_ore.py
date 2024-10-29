@@ -6,6 +6,7 @@ import numpy as np
 from statsmodels.tsa.seasonal import seasonal_decompose
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from factor_analyzer.factor_analyzer import calculate_kmo
 
 # Visualização de dados
 import matplotlib.pyplot as plt
@@ -13,11 +14,22 @@ import seaborn as sns
 
 # Carregando o dataset
 file_path= "base/MiningProcess_Flotation_Plant_Database.csv"
-
-dados = pd.read_csv(
-    file_path,
-    decimal=',',
-)
+try:
+    dados = pd.read_csv(
+        file_path,
+        decimal=',',
+    )
+    print(f"Arquivo carregado com sucesso: {file_path}")
+except FileNotFoundError:
+    print(f"Arquivo não encontrado: {file_path}")
+    exit(1)
+except pd.errors.EmptyDataError:
+    print(f"Arquivo vazio: {file_path}")
+    exit(1)
+except pd.errors.ParserError:
+    print(f"Erro ao carregar o arquivo: {file_path}")
+    exit(1)
+    
 
 # Pré-processamento
 
@@ -60,22 +72,23 @@ print(contagem_medidas[contagem_medidas['% Iron Feed'] != 180])
 # Caso se opte em não preencher os valores faltantes, uma alterativa é selecionar os dados a partir de uma data específica
 # Por exemplo, a partir de 2017-03-29, para retirar os dias faltantes e reduzir o impacto nas análises
 
-dados_tratados= dados.groupby(dados.index).mean() # Agrupar os dados pela média diária
-#dados_tratados = dados['date'] > '2017-03-29' # Selecionar os dados a partir de 2017-03-29
-#print(dados_tratados.describe())
-#print(dados_tratados.info())
+dados_tratados= dados.groupby(dados.index).mean().dropna() # Agrupar os dados pela média diária
+#dados_tratados = dados[dados.index > '2017-03-09'] # Selecionar os dados a partir de 2017-03-29
 
-dados_tratados.to_csv('base/dados_tratados_media.csv', index=True) # Salvar os dados tratados em um novo arquivo CSV
-dados.to_csv('base/dados_tratados.csv', index=True) # Salvar os dados tratados em um novo arquivo CSV
+# Salvar os dados tratados em um novo arquivo CSV
+dados_tratados.to_csv('base/dados_tratados_media.csv', index=True) 
+dados.to_csv('base/dados_tratados.csv', index=True) 
+
 
 # EDA - Análise Exploratória de Dados
+
 # Análise de correlação
 matriz_correlacao = dados_tratados.corr()
 
 mask = np.triu(np.ones_like(matriz_correlacao, dtype=bool))# Criar uma máscara para o triângulo superior
-plt.figure(figsize=(20, 15))
+plt.figure(figsize=(20, 20))
 sns.set(font_scale=1.0)
-heatmap = sns.heatmap(matriz_correlacao, annot=True, cmap='RdYlBu', square=True,
+heatmap = sns.heatmap(matriz_correlacao, annot=True, cmap='RdYlBu', 
                       fmt=".2f",  # Exibir valores com duas casas decimais
                       center=0,
                       xticklabels=matriz_correlacao.columns,  # Rótulos do eixo x
@@ -84,183 +97,19 @@ heatmap = sns.heatmap(matriz_correlacao, annot=True, cmap='RdYlBu', square=True,
                       linewidths=0.5, linecolor='white',  # Bordas das células
                       mask=mask,
                       vmin=-1, vmax=1,  # Escala de cores de -1 a 1
-                      cbar_kws={"shrink": 1})  # Ajustar o tamanho da barra de cores
+                      cbar_kws={"shrink": 0.8})  # Ajustar o tamanho da barra de cores
 
-
+heatmap.set_facecolor('#f8f9fa')# Definir fundo 
 ax = heatmap.axes# Obter os eixos atuais
 ax.set_aspect("auto")# Ajustar o aspecto dos eixos para 'auto' para ajustar automaticamente o tamanho das células
+plt.tight_layout()
+#plt.title("Mapa de correlação entre as variáveis")# Adicionar um título ao heatmap
+plt.savefig('Images/mapa_de_correlacao.png', dpi=300)
 
-plt.title("Mapa de correlação entre as variáveis")# Adicionar um título ao heatmap
-plt.savefig('Images/mapa_de_correlacao.png')
-
-# Separação das features do dataset
-
-airFlow = dados_tratados[['Flotation Column 01 Air Flow', 
-                          'Flotation Column 02 Air Flow', 
-                          'Flotation Column 03 Air Flow', 
-                          'Flotation Column 04 Air Flow',
-                          'Flotation Column 05 Air Flow', 
-                          'Flotation Column 06 Air Flow', 
-                          'Flotation Column 07 Air Flow',
-                          '% Silica Concentrate'
-                        ]].drop_duplicates().dropna().groupby('date').mean()  
-
-airLevel = dados_tratados[['Flotation Column 01 Level',
-                          'Flotation Column 02 Level', 
-                          'Flotation Column 03 Level', 
-                          'Flotation Column 04 Level', 
-                          'Flotation Column 05 Level', 
-                          'Flotation Column 06 Level', 
-                          'Flotation Column 07 Level',
-                          '% Silica Concentrate'
-                          ]].drop_duplicates().dropna().groupby('date').mean()
-
-importante = dados_tratados[['Starch Flow',
-                            'Amina Flow',
-                            'Ore Pulp Flow',
-                            'Ore Pulp pH',
-                            'Ore Pulp Density',
-                            '% Silica Concentrate',
-                            ]].drop_duplicates().dropna().groupby('date').mean()
-
-# Calcular a correlação
-correlacao = importante.corr()
-mask = np.triu(np.ones_like(correlacao, dtype=bool))  # Criar uma máscara para o triângulo superior
-
-# Criar o mapa de calor
-plt.figure(figsize=(20, 15))
-sns.set(font_scale=1.0)
-heatmap = sns.heatmap(correlacao, annot=True, cmap='RdYlBu', square=True,
-                      fmt=".2f", center=0, xticklabels=correlacao.columns,
-                      yticklabels=correlacao.columns, annot_kws={"size": 15},
-                      linewidths=0.5, linecolor='white', mask=mask, vmin=-1, vmax=1,
-                      cbar_kws={"shrink": 1})
-heatmap.axes.set_aspect("auto")
-plt.title("Mapa de correlação entre as variáveis")
-plt.savefig('Images/mapa_de_correlacao_importante.png')
-
-# Visualização das séries temporais
-cor_importante = ['#9dc6ae', '#bbd0ff', '#c8b6ff', '#deab90']
-fig, axs = plt.subplots(4, 1, figsize=(16, 18))  # Criar uma figura com 4 subplots
-fig.suptitle('Séries temporais das variáveis de interesse', fontsize=20)  # Adicionar um título à figura
-
-# Adicionar as séries temporais aos subplots
-variaveis = ['Starch Flow', 'Amina Flow', 'Ore Pulp pH', '% Silica Concentrate']
-for i, var in enumerate(variaveis):
-    axs[i].plot(importante.index, importante[var], label=var, color=cor_importante[i])
-    axs[i].set_ylabel(var)
-    axs[i].legend()
-    axs[i].set_facecolor('white')  # Definir fundo branco
-    decomposicao = seasonal_decompose(importante[var], model='additive', period=30, extrapolate_trend=30)
-    axs[i].plot(decomposicao.trend, color='red')
-
-# Adicionar rótulo ao eixo x no último subplot
-axs[-1].set_xlabel('Date')
-
-# Ajustar layout e mostrar o gráfico
-plt.tight_layout(rect=[0, 0, 1, 0.96])  # Ajustar layout para não sobrepor o título
-plt.savefig('Images/series_temporais_importante.png')
-
-# Calcular a correlação
-correlacao_airLevel = airLevel.corr()
-mask = np.triu(np.ones_like(correlacao_airLevel, dtype=bool))  # Criar uma máscara para o triângulo superior
-
-# Criar o mapa de calor
-plt.figure(figsize=(20, 15))
-sns.set(font_scale=1.0)
-heatmap = sns.heatmap(correlacao_airLevel, annot=True, cmap='RdYlBu', square=True,
-                      fmt=".2f",  # Exibir valores com duas casas decimais
-                      center=0,
-                      xticklabels=correlacao_airLevel.columns,  # Rótulos do eixo x
-                      yticklabels=correlacao_airLevel.columns,  # Rótulos do eixo y
-                      annot_kws={"size": 15},  # Tamanho da fonte dentro das células
-                      linewidths=0.5, linecolor='white',  # Bordas das células
-                      mask=mask,
-                      vmin=-1, vmax=1,  # Escala de cores de -1 a 1
-                      cbar_kws={"shrink": 1})  # Ajustar o tamanho da barra de cores
-
-# Ajustar o aspecto dos eixos para 'auto' para ajustar automaticamente o tamanho das células
-heatmap.axes.set_aspect("auto")
-
-# Adicionar um título ao heatmap
-plt.title("Mapa de correlação entre as variáveis de Air Level")
-plt.savefig('Images/mapa_de_correlacao_airLevel.png')
-
-# Visualização das séries temporais
-# DATAFRAME: airLevel
-cor_airLevel = ['#e4e7e4', '#c0c4ca', '#9ba1b0', '#777f96', '#535c7b', '#2e3961', '#0a1647','#deab90']
-fig, axs = plt.subplots(8, 1, figsize=(16, 24))  # Criar uma figura com 7 subplots
-fig.suptitle('Séries temporais das variáveis de Air Level', fontsize=20)  # Adicionar um título à figura
-
-# Adicionar as séries temporais aos subplots
-for i, coluna in enumerate(airLevel.columns):
-    axs[i].plot(airLevel.index, airLevel[coluna], label=coluna, color=cor_airLevel[i])
-    axs[i].set_ylabel(coluna)
-    axs[i].legend()
-    axs[i].set_facecolor('white')  # Definir fundo branco
-    decomposicao = seasonal_decompose(airLevel[coluna], model='additive', period=30, extrapolate_trend=30)
-    axs[i].plot(decomposicao.trend, color='red')
-
-# Adicionar rótulo ao eixo x no último subplot
-axs[-1].set_xlabel('Date')
-
-# Ajustar layout e mostrar o gráfico
-plt.tight_layout(rect=[0, 0, 1, 0.96])  # Ajustar layout para não sobrepor o título
-plt.savefig('Images/series_temporais_airLevel.png')
-
-
-# Calcular a correlação
-correlacao_airFlow = airFlow.corr()
-mask = np.triu(np.ones_like(correlacao_airFlow, dtype=bool))  # Criar uma máscara para o triângulo superior
-
-# Criar o mapa de calor
-plt.figure(figsize=(20, 15))
-sns.set(font_scale=1.0)
-heatmap = sns.heatmap(correlacao_airFlow, annot=True, cmap='RdYlBu', square=True,
-                      fmt=".2f",  # Exibir valores com duas casas decimais
-                      center=0,
-                      xticklabels=correlacao_airFlow.columns,  # Rótulos do eixo x
-                      yticklabels=correlacao_airFlow.columns,  # Rótulos do eixo y
-                      annot_kws={"size": 15},  # Tamanho da fonte dentro das células
-                      linewidths=0.5, linecolor='white',  # Bordas das células
-                      mask=mask,
-                      vmin=-1, vmax=1,  # Escala de cores de -1 a 1
-                      cbar_kws={"shrink": 1})  # Ajustar o tamanho da barra de cores
-
-# Ajustar o aspecto dos eixos para 'auto' para ajustar automaticamente o tamanho das células
-heatmap.axes.set_aspect("auto")
-
-# Adicionar um título ao heatmap
-plt.title("Mapa de correlação entre as variáveis de Air Flow")
-plt.savefig('Images/mapa_de_correlacao_airFlow.png')
-
-# Visualização das séries temporais
-# DATAFRAME: airFlow
-cor_airFlow = ['#edf2fb', '#e2eafc', '#d7e3fc', '#ccdbfd', '#c1d3fe', '#b6ccfe', '#abc4ff','#deab90']
-fig, axs = plt.subplots(8, 1, figsize=(16, 24))  # Criar uma figura com 7 subplots
-fig.suptitle('Séries temporais das variáveis de Air Flow', fontsize=20)  # Adicionar um título à figura
-
-# Adicionar as séries temporais aos subplots
-for i, coluna in enumerate(airFlow.columns):
-    axs[i].plot(airFlow.index, airFlow[coluna], label=coluna, color=cor_airFlow[i])
-    axs[i].set_ylabel(coluna)
-    axs[i].legend()
-    axs[i].set_facecolor('white')  # Definir fundo branco
-    decomposicao = seasonal_decompose(airFlow[coluna], model='additive', period=30, extrapolate_trend=30)
-    axs[i].plot(decomposicao.trend, color='red')
-
-# Adicionar rótulo ao eixo x no último subplot
-axs[-1].set_xlabel('Date')
-
-# Ajustar layout e mostrar o gráfico
-plt.tight_layout(rect=[0, 0, 1, 0.96])  # Ajustar layout para não sobrepor o título
-plt.savefig('Images/series_temporais_airFlow.png')
-
-# Uma analise visual rápida das series temporais indicam que, de certa maneira, 
-# O pH baixo da polpa de minério, a redução de amido e amida está associado a um aumento na concentração de sílica
-# Controlar esses parâmetros pode ser uma maneira de controlar a concentração de sílica
-
-# O controle do níveis de fluxo ar nas colunas de flotação finais pode contribuir para a redução da silica
+# Alta correlação entre algumas variáveis, o que pode indicar multicolinearidade
+# a correlação entre a concentração inicial e final de ferro e sílica apresentam valores negativos próximos de -1
+# A correlação entre nivel da coluna de flotação e fluxo de ar apresenta valores positivos 
+# Número muito grande de variáveis, o que dificulta a análise, executar analise de componentes principais para redução de dimensionalidade
 
 # APlicação da técnica PCA para redução de dimensionalidade
 
@@ -268,35 +117,98 @@ x = dados_tratados
 scaler = StandardScaler() # Padronização dos dados, os dados possuem escalas diferentes a padronização é necessária
 x_scaled = scaler.fit_transform(x)
 
+# Calcular a estatística KMO  > 0.6 é considerado adequado para aplicar PCA
+kmo_all, kmo_model = calculate_kmo(x_scaled)
+print("Estatística KMO para cada variável:\n", kmo_all)
+print("Estatística KMO geral:", kmo_model)
+
+
 # Aplicação da PCA sem especificar o número de componentes
-pca = PCA()
+pca = PCA() # para definir o número de componentes n_components=2
 pca.fit(x_scaled)
 
 # Variância explicada por cada componente principal
 explained_variance = pca.explained_variance_ratio_
 
-# Scree plot
-plt.figure(figsize=(10, 6))
-plt.plot(range(1, len(explained_variance) + 1), explained_variance, marker='o', linestyle='--')
-plt.title('Scree Plot')
-plt.xlabel('Principal Component')
-plt.ylabel('Explained Variance Ratio')
-plt.savefig('Images/scree_plot.png')
+# Configuração do gráfico
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Valores do eixo x
+x_values = range(1, len(explained_variance) + 1)
+
+# Criação do gráfico de barras com cores diferentes
+bars = ax.bar(x_values, explained_variance, alpha=0.7)
+for bar, x_val in zip(bars, x_values):
+    if x_val <= 10:
+        bar.set_color('#011638')
+    else:
+        bar.set_color('#c6c7c4')
+
+ax.set_title('Variância Explicada por Componente Principal', loc='left', fontsize=16, pad=20, color = '#353b3c')
+ax.set_xlabel('Componente Principal')
+ax.set_ylabel('Variância Explicada')
+ax.set_facecolor('white')  # Definir fundo branco
+ax.spines['top'].set_visible(False)  # Remover a linha superior
+ax.spines['right'].set_visible(False)  # Remover a linha direita
+
+# Adicionando texto explicativo
+ax.text(x=4.5, y=0.2, s="A variância explicada $\\bf{diminui}$ à medida que mais \n"
+        "componentes são analisados, sugerindo que os primeiros  \n"
+        "capturam a $\\bf{maior}$ parte da informação dos dados.",
+        verticalalignment='top',
+        fontsize=18, color='#353b3c')
+
+# Ajustes finais e salvando a imagem
+plt.tight_layout()
+plt.savefig('Images/explained_variance_bar.png')
 
 
-# Cumulative explained variance plot
+# Configuração do gráfico para variancia explicada acumulada
+fig, ax1 = plt.subplots(figsize=(10, 6))
 cumulative_explained_variance = explained_variance.cumsum()
-plt.figure(figsize=(10, 6))
-plt.plot(range(1, len(cumulative_explained_variance) + 1), cumulative_explained_variance, marker='o', linestyle='--')
-plt.title('Cumulative Explained Variance')
-plt.xlabel('Number of Principal Components')
-plt.ylabel('Cumulative Explained Variance Ratio')
-plt.axhline(y=0.8, color='r', linestyle='--')  # Linha de referência para 85% da variância explicada
-plt.savefig('Images/cumulative_explained_variance.png')
+
+# Gráfico de barras da variância explicada por cada componente principal
+bars = ax1.bar(range(1, len(cumulative_explained_variance) + 1), cumulative_explained_variance, alpha=0.7)
+
+# Alterar a cor das barras com base no valor
+for bar, val in zip(bars, cumulative_explained_variance):
+    if val < 0.9:
+        bar.set_color('#011638')
+    else:
+        bar.set_color('#c6c7c4')
+
+# Configuração do gráfico
+ax1.set_title('Variância Explicada Acumulada para o conjunto de dados indica que', loc='left', fontsize=16, pad=20, color = '#353b3c')
+ax1.set_xlabel('Componente Principal')
+ax1.set_ylabel('Variância Explicada Acumulada')
+ax1.axhline(y=0.9, color='r', linestyle='--')  # Linha de referência para 85% da variância explicada
+ax1.set_facecolor('white')  # Definir fundo branco
+ax1.spines['top'].set_visible(False)  # Remover a linha superior
+ax1.spines['right'].set_visible(False)  # Remover a linha direita
+
+# Adicionando texto explicativo
+ax1.text(x=0.5, y=1, s="Até a componente PC-10 \n"
+        "cerca de $\\bf{90\\%}$ da variância é preservada",
+        verticalalignment='top',
+        fontsize=14, color='#353b3c')
+
+# Ajustes finais e salvando a imagem
+plt.tight_layout()
+plt.savefig('Images/cumulative_explained_variance_bar.png')
+
+# Identificar a maior contribuição para cada componente principal
+components = pca.components_
+for i, component in enumerate(components):
+    max_contrib_index = component.argmax()  # Índice da variável com maior contribuição
+    max_contrib_variable = dados_tratados.columns[max_contrib_index]  # Nome da variável
+    max_contrib_value = component[max_contrib_index]  # Valor da contribuição
+    print(f"Componente Principal {i+1}:")
+    print(f"  Variável com maior contribuição: {max_contrib_variable}")
+    print(f"  Valor da contribuição: {max_contrib_value}")
 
 
 # Determinar o número ótimo de componentes principais
-optimal_components = next(i for i, cumulative_variance in enumerate(cumulative_explained_variance) if cumulative_variance >= 0.8) + 1
+optimal_components = next(i for i, cumulative_variance in enumerate(cumulative_explained_variance) if cumulative_variance >= 0.88) + 1
 print(f'O número ótimo de componentes principais é: {optimal_components}')
 
 # Aplicação da PCA com o número ótimo de componentes
@@ -306,27 +218,23 @@ principal_components = pca_optimal.fit_transform(x_scaled)
 # Criação de um DataFrame com os componentes principais
 pca_df = pd.DataFrame(data=principal_components, columns=[f'PC{i+1}' for i in range(optimal_components)])
 pca_df.index = dados_tratados.index  # Manter o índice de tempo original
-
-
+print(pca_df.head())
 # Análise das cargas dos componentes principais
 loadings = pd.DataFrame(pca_optimal.components_.T, columns=[f'PC{i+1}' for i in range(optimal_components)], index=dados_tratados.columns)
-print(loadings)   
+ 
+# Imprimir os 5 maiores loadings em módulo para cada componente principal
+# for col in loadings.columns:
+#     print(f"Top 5 loadings for {col}:")
+#     top_loadings = loadings[col].abs().nlargest(5)
+#     print(loadings.loc[top_loadings.index, col])
+    
 
 # Visualização das cargas dos componentes principais
 plt.figure(figsize=(16, 8))
-sns.heatmap(loadings, annot=True, cmap='coolwarm')
-plt.title('Heatmap of Principal Component Loadings')
-plt.xlabel('Principal Components')
-plt.ylabel('Features')
+sns.heatmap(loadings, annot=True, cmap='RdYlBu', fmt=".2f")
+#plt.title('Heatmap of Principal Component Loadings')
+plt.xlabel('Componentes Principais')
+#plt.ylabel('Features')
+plt.tight_layout()
 plt.savefig('Images/pca_loadings_heatmap.png')
 
-
-# Visualização das séries temporais dos componentes principais
-plt.figure(figsize=(16, 8))
-for i in range(optimal_components):
-    plt.plot(pca_df.index, pca_df[f'PC{i+1}'], label=f'PC{i+1}')
-plt.xlabel('Date')
-plt.ylabel('Principal Components')
-plt.legend()
-plt.title('Principal Components over Time')
-plt.savefig('Images/pca_time_series.png')

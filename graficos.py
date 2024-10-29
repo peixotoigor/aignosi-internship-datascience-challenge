@@ -3,6 +3,8 @@
 # Manipulação e tratamento de dados
 import pandas as pd
 import numpy as np
+from statsmodels.tsa.seasonal import seasonal_decompose
+
 
 # Visualização de dados
 import matplotlib.pyplot as plt
@@ -18,9 +20,6 @@ dados = pd.read_csv(
 dados['date'] = pd.to_datetime(dados['date'], format='%Y-%m-%d %H:%M:%S') # Conversão da coluna 'date' para datetime
 dados.set_index('date', inplace=True) # Definir a coluna 'date' como índice do DataFrame original
 #dados = dados.astype('float64')
-print(dados.head())
-print(dados.info())
-
 
 dados_tratados= dados.groupby(dados.index).mean().dropna() # Agrupar os dados pela média diária
 
@@ -163,22 +162,115 @@ plt.savefig('Images/serie_temporal_ferro.png')
 
 
 
+# Visualização das series temporais 
 
+airFlow = dados_tratados[['Flotation Column 01 Air Flow', 
+                          'Flotation Column 02 Air Flow', 
+                          'Flotation Column 03 Air Flow', 
+                          'Flotation Column 04 Air Flow',
+                          'Flotation Column 05 Air Flow', 
+                          'Flotation Column 06 Air Flow', 
+                          'Flotation Column 07 Air Flow',
+                          '% Silica Concentrate'
+                        ]].drop_duplicates().dropna().groupby('date').mean()  
 
-# # Analise dos dados de concentração de sílica e ferro
-cor_dados = ['#6c757d', '#adb5bd', '#7f5539', '#b08968']
-fig, axs = plt.subplots(2, 2, figsize=(16, 18))  # Criar uma figura com 4 subplots
+airLevel = dados_tratados[['Flotation Column 01 Level',
+                          'Flotation Column 02 Level', 
+                          'Flotation Column 03 Level', 
+                          'Flotation Column 04 Level', 
+                          'Flotation Column 05 Level', 
+                          'Flotation Column 06 Level', 
+                          'Flotation Column 07 Level',
+                          '% Silica Concentrate'
+                          ]].drop_duplicates().dropna().groupby('date').mean()
+
+importante = dados_tratados[['Starch Flow',
+                            'Amina Flow',
+                            'Ore Pulp Flow',
+                            'Ore Pulp pH',
+                            'Ore Pulp Density',
+                            '% Silica Concentrate',
+                            ]].drop_duplicates().dropna().groupby('date').mean()
+
+cor_importante = ['#9dc6ae', '#bbd0ff', '#c8b6ff', '#b3dee2','#deab90']
+fig, axs = plt.subplots(5, 1, figsize=(16, 18))  # Criar uma figura com 4 subplots
 #fig.suptitle('Séries temporais das variáveis de interesse', fontsize=20)  # Adicionar um título à figura
-variaveis = ['% Iron Feed', '% Iron Concentrate', "% Silica Feed", "% Silica Concentrate"]
+
+# Adicionar as séries temporais aos subplots
+variaveis = ['Starch Flow', 'Amina Flow', 'Ore Pulp pH', 'Ore Pulp Density','% Silica Concentrate']
 for i, var in enumerate(variaveis):
-    ax = axs[i // 2, i % 2]  # Acessar o subplot correto
-    ax.hist(dados[var], bins=50, color=cor_dados[i], edgecolor='black', alpha=0.7, label=var)
-    ax.legend(loc='upper right')
-    ax.set_title("Histograma de {}".format(var))
-    ax.set_ylabel("Número de ocorrências")
-    ax.set_xlabel(var)
-    ax.set_facecolor('white')  # Definir fundo branco
+    axs[i].plot(importante.index, importante[var], label=var, color=cor_importante[i])
+    axs[i].set_ylabel(var)
+    #axs[i].legend()
+    axs[i].set_facecolor('white')  # Definir fundo branco
+    decomposicao = seasonal_decompose(importante[var], model='additive', period=30, extrapolate_trend=30)
+    axs[i].plot(decomposicao.trend, color='red')
+    axs[i].axvline(x=pd.Timestamp('2017-08-30'), color='black', linestyle='-',linewidth=2)  # Adicionar uma linha vertical para destacar a data de corte
+    axs[i].axvline(x=pd.Timestamp('2017-08-18'), color='black', linestyle='-',linewidth=2)  # Adicionar uma linha vertical para destacar a data de corte
+    axs[i].axvline(x=pd.Timestamp('2017-05-10'), color='black', linestyle='-',linewidth=2)  # Adicionar uma linha vertical para destacar a data de corte
+
+# Adicionar rótulo ao eixo x no último subplot
+axs[-1].set_xlabel('Date')
 
 # Ajustar layout e mostrar o gráfico
 plt.tight_layout(rect=[0, 0, 1, 0.96])  # Ajustar layout para não sobrepor o título
-plt.savefig('Images/iron_feed_concentrade.png')
+plt.savefig('Images/series_temporais_importante.png', format='png', dpi=600)
+
+# Visualização das séries temporais
+# DATAFRAME: airLevel
+cor_airLevel = ['#e4e7e4', '#c0c4ca', '#9ba1b0', '#777f96', '#535c7b', '#2e3961', '#0a1647','#deab90']
+fig, axs = plt.subplots(8, 1, figsize=(16, 24))  # Criar uma figura com 7 subplots
+#fig.suptitle('Séries temporais das variáveis de Air Level', fontsize=20)  # Adicionar um título à figura
+
+# Adicionar as séries temporais aos subplots
+for i, coluna in enumerate(airLevel.columns):
+    axs[i].plot(airLevel.index, airLevel[coluna], label=coluna, color=cor_airLevel[i])
+    axs[i].set_ylabel(coluna)
+   # axs[i].legend()
+    axs[i].set_facecolor('white')  # Definir fundo branco
+    decomposicao = seasonal_decompose(airLevel[coluna], model='additive', period=30, extrapolate_trend=30)
+    axs[i].plot(decomposicao.trend, color='red')
+    #axs[i].axvline(x=pd.Timestamp('2017-08-30'), color='black', linestyle='-',linewidth=2)  # Adicionar uma linha vertical para destacar a data de corte
+    #axs[i].axvline(x=pd.Timestamp('2017-08-18'), color='black', linestyle='-',linewidth=2)  # Adicionar uma linha vertical para destacar a data de corte
+    #axs[i].axvline(x=pd.Timestamp('2017-05-10'), color='black', linestyle='-',linewidth=2)  # Adicionar uma linha vertical para destacar a data de corte
+
+# Adicionar rótulo ao eixo x no último subplot
+axs[-1].set_xlabel('Date')
+
+# Ajustar layout e mostrar o gráfico
+plt.tight_layout()  # Ajustar layout para não sobrepor o título
+plt.savefig('Images/series_temporais_airLevel.png', format='png', dpi=600)
+
+
+# Visualização das séries temporais
+# DATAFRAME: airFlow
+cor_airFlow = ['#e4e7e4', '#c0c4ca', '#9ba1b0', '#777f96', '#535c7b', '#2e3961', '#0a1647','#deab90']
+fig, axs = plt.subplots(8, 1, figsize=(16, 24))  # Criar uma figura com 7 subplots
+#fig.suptitle('Séries temporais das variáveis de Air Flow', fontsize=20)  # Adicionar um título à figura
+
+# Adicionar as séries temporais aos subplots
+for i, coluna in enumerate(airFlow.columns):
+    axs[i].plot(airFlow.index, airFlow[coluna], label=coluna, color=cor_airFlow[i])
+    axs[i].set_ylabel(coluna)
+    #axs[i].legend()
+    axs[i].set_facecolor('white')  # Definir fundo branco
+    decomposicao = seasonal_decompose(airFlow[coluna], model='additive', period=30, extrapolate_trend=30)
+    axs[i].plot(decomposicao.trend, color='red')
+    #axs[i].axvline(x=pd.Timestamp('2017-08-30'), color='black', linestyle='-',linewidth=2)  # Adicionar uma linha vertical para destacar a data de corte
+    #axs[i].axvline(x=pd.Timestamp('2017-08-18'), color='black', linestyle='-',linewidth=2)  # Adicionar uma linha vertical para destacar a data de corte
+    #axs[i].axvline(x=pd.Timestamp('2017-05-10'), color='black', linestyle='-',linewidth=2)  # Adicionar uma linha vertical para destacar a data de corte
+
+# Adicionar rótulo ao eixo x no último subplot
+axs[-1].set_xlabel('Date')
+
+# Ajustar layout e mostrar o gráfico
+plt.tight_layout()  # Ajustar layout para não sobrepor o título
+plt.savefig('Images/series_temporais_airFlow.png', format='png', dpi=600)
+
+# Uma analise visual rápida das series temporais indicam que, de certa maneira, 
+# O pH baixo da polpa de minério, a redução de amido e amida está associado a um aumento na concentração de sílica
+# Controlar esses parâmetros pode ser uma maneira de controlar a concentração de sílica
+
+# O controle do níveis de fluxo ar nas colunas de flotação finais pode contribuir para a redução da silica
+
+
