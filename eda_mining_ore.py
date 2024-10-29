@@ -237,4 +237,3 @@ plt.xlabel('Componentes Principais')
 #plt.ylabel('Features')
 plt.tight_layout()
 plt.savefig('Images/pca_loadings_heatmap.png')
-
